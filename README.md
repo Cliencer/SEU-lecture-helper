@@ -7,6 +7,7 @@
 [安装SEU研究生讲座预约助手](https://raw.githubusercontent.com/Cliencer/SEU-lecture-helper/master/code.user.js)
 
 *需要安装[油猴插件](https://www.tampermonkey.net/) 才能运行。*
+
 **Download**
 
 [Install SEU-lecture-helper](https://raw.githubusercontent.com/Cliencer/SEU-lecture-helper/master/code.user.js)
