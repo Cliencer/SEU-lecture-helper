@@ -2,7 +2,7 @@
 // @name         SEU研究生讲座预约助手
 // @icon         https://i.seu.edu.cn/oss/iconLab/2023-02-17/研究生素质讲座-学生-1076102412478222336.png?sign=rl70_oAzOdwUO0mO4Qq3_eYf5rD-ymKu0Ypgh9DiRnFlT3ds7c8wOok37-UxVig5
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.01
 // @description  能够在PC端SEU网上办事服务大厅的研究生素质讲座实现自动定时抢讲座，可以做到自动或者手动输入验证码，解放双手！
 // @author       SEU-xfg
 // @match        http://ehall.seu.edu.cn/gsapp/sys/jzxxtjapp/*
@@ -142,6 +142,7 @@
 
 
     var lectureList
+
     getTargetLecture()
 
     // 等待特定元素加载完成
@@ -235,11 +236,26 @@
 
     // 获取目标讲座信息
     function getTargetLecture() {
+
         GM_xmlhttpRequest({
             method: "POST",
             url: 'http://ehall.seu.edu.cn/gsapp/sys/yddjzxxtjappseu/modules/hdyy/queryActivityList.do',
             headers: lecture_headers,
             onload: function(response) {
+                if(response.status==403){
+                    GM_xmlhttpRequest({
+                        method: "GET",
+                        url: "http://ehall.seu.edu.cn/gsapp/sys/yddjzxxtjappseu/*default/index.do#/hdyy", // 加载web更新cookie
+                        onload: function(response) {
+                            console.log("Loaded web ");
+                            getTargetLecture()
+                        },
+                        onerror: function(response) {
+                            // 这里处理错误情况
+                            console.error("Error loading webpage");
+                        }
+                    });
+                }
                 const res = JSON.parse(response.responseText);
                 if (res && res.datas && res.datas.hdlbList) {
                     const lectures = res.datas.hdlbList;
