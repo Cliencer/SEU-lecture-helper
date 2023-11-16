@@ -9,8 +9,8 @@
 // @grant        GM_xmlhttpRequest
 // @homepageURL https://github.com/Cliencer/SEU-lecture-helper
 // @supportURL  https://github.com/Cliencer/SEU-lecture-helper/issues
-// @downloadURL https://github.com/Cliencer/SEU-lecture-helper/blob/master/code.user.js
-// @updateURL   https://github.com/Cliencer/SEU-lecture-helper/blob/master/code.user.js
+// @downloadURL https://github.com/Cliencer/SEU-lecture-helper/master/code.user.js
+// @updateURL   https://github.com/Cliencer/SEU-lecture-helper/master/code.user.js
 // ==/UserScript==
 
 (function() {
