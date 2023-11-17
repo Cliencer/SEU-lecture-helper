@@ -2,18 +2,17 @@
 // @name         SEU研究生讲座预约助手
 // @icon         https://i.seu.edu.cn/oss/iconLab/2023-02-17/研究生素质讲座-学生-1076102412478222336.png?sign=rl70_oAzOdwUO0mO4Qq3_eYf5rD-ymKu0Ypgh9DiRnFlT3ds7c8wOok37-UxVig5
 // @namespace    http://tampermonkey.net/
-// @version      1.01
+// @version      1.02
 // @description  能够在PC端SEU网上办事服务大厅的研究生素质讲座实现自动定时抢讲座，可以做到自动或者手动输入验证码，解放双手！
 // @author       SEU-xfg
 // @match        http://ehall.seu.edu.cn/gsapp/sys/jzxxtjapp/*
-// @grant        GM_xmlhttpRequest
 // @homepageURL https://github.com/Cliencer/SEU-lecture-helper
 // @supportURL  https://github.com/Cliencer/SEU-lecture-helper/issues
 // @downloadURL https://github.com/Cliencer/SEU-lecture-helper/master/code.user.js
 // @updateURL   https://github.com/Cliencer/SEU-lecture-helper/master/code.user.js
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
     var settingsPanel = document.createElement('div');
     settingsPanel.innerHTML = `
@@ -63,22 +62,22 @@
     document.body.appendChild(settingsPanel);
 
     // 打开设置面板
-    floatButton.addEventListener('click', function() {
+    floatButton.addEventListener('click', function () {
         document.getElementById('mySettingsPanel').style.display = 'block';
     });
 
     // 关闭设置面板
-    document.getElementById('closeSettings').addEventListener('click', function() {
+    document.getElementById('closeSettings').addEventListener('click', function () {
         document.getElementById('mySettingsPanel').style.display = 'none';
     });
 
     // 控制显示/隐藏凭证输入框
-    document.getElementById('autoVerifyCheck').addEventListener('change', function() {
+    document.getElementById('autoVerifyCheck').addEventListener('change', function () {
         document.getElementById('credentials').style.display = this.checked ? 'block' : 'none';
     });
 
     // 保存设置
-    document.getElementById('saveSettings').addEventListener('click', function() {
+    document.getElementById('saveSettings').addEventListener('click', function () {
         autoVerify = document.getElementById('autoVerifyCheck').checked;
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
@@ -95,7 +94,7 @@
     });
 
     // 加载保存的设置
-    window.onload = function() {
+    window.onload = function () {
         const username = localStorage.getItem('username');
         const password = localStorage.getItem('password');
         const softid = localStorage.getItem('softid');
@@ -112,7 +111,7 @@
     };
 
     // 显示帮助信息
-    document.getElementById('helpButton').addEventListener('click', function() {
+    document.getElementById('helpButton').addEventListener('click', function () {
         alert(`由于脚本需要自动获取验证码图片，并识别验证码，因此选用超级鹰接口服务。其账户配置过程如下：
 1. 访问 http://www.chaojiying.com/ ，注册账号，充值1元作为接口费用。
 2. 进入个人中心 > 软件ID，申请一个软件ID。
@@ -140,13 +139,12 @@
     }
 
 
-
     var lectureList
 
     getTargetLecture()
 
     // 等待特定元素加载完成
-    waitForElement('tbody', function(tbody) {
+    waitForElement('tbody', function (tbody) {
         // 对tbody进行操作
         observeTbody(tbody);
     });
@@ -198,32 +196,32 @@
             firstTd.appendChild(button);
 
             // 按钮点击事件
-            button.addEventListener('click', function() {
+            button.addEventListener('click', function () {
+                const lecture = findMatchingObject(fourthTdSpanText)
                 button.disabled = true;
-
-                const lecture=findMatchingObject(fourthTdSpanText)
                 console.log(lecture)
-                let wid=lecture.WID
-                let time=lecture.YYKSSJ
-                let timeout=calculateTimeDifference(time)+delayTime*1000
-                if(timeout<500){
-                    timeout=500
-                }else if(timeout>3000){
-                    if(autoVerify){
-                        var dialogText="正在准备抢课，不要关闭，请耐心等待。"
-                        }else{
-                            dialogText="你还未设置自动输入验证码，请在倒计时结束前在电脑前准备手动输入！"
-                        }
-                    var dialogBox=createWindows10StyleDialog(dialogText)
+                let wid = lecture.WID
+                let time = lecture.YYKSSJ
+                let timeout = calculateTimeDifference(time) + delayTime * 1000
+                if (timeout < 500) {
+                    timeout = 500
+                } else if (timeout > 3000) {
+                    if (autoVerify) {
+                        var dialogText = "正在准备抢课，不要关闭，请耐心等待。"
+                    } else {
+                        dialogText = "你还未设置自动输入验证码，请在倒计时结束前在电脑前准备手动输入！"
                     }
+                    var dialogBox = createWindows10StyleDialog(dialogText)
+                }
 
                 startCountdown(timeout, button)
 
-                let keepAliveIntervalId=setInterval(() => {
+
+                let keepAliveIntervalId = setInterval(() => {
                     keepAlive(wid);
-                }, 60*1000);
+                }, 60 * 1000);
                 setTimeout(() => {
-                    try{dialogBox.style.display = 'none';}catch(e){}
+                    try { dialogBox.style.display = 'none'; } catch (e) { }
                     rob(wid)
                     // 抢讲座操作完成后，清除保活定时器
                     clearInterval(keepAliveIntervalId);
@@ -236,39 +234,37 @@
 
     // 获取目标讲座信息
     function getTargetLecture() {
-
-        GM_xmlhttpRequest({
-            method: "POST",
-            url: 'http://ehall.seu.edu.cn/gsapp/sys/yddjzxxtjappseu/modules/hdyy/queryActivityList.do',
-            headers: lecture_headers,
-            onload: function(response) {
-                if(response.status==403){
-                    GM_xmlhttpRequest({
-                        method: "GET",
-                        url: "http://ehall.seu.edu.cn/gsapp/sys/yddjzxxtjappseu/*default/index.do#/hdyy", // 加载web更新cookie
-                        onload: function(response) {
-                            console.log("Loaded web ");
-                            getTargetLecture()
-                        },
-                        onerror: function(response) {
-                            // 这里处理错误情况
-                            console.error("Error loading webpage");
-                        }
-                    });
+        fetch('http://ehall.seu.edu.cn/gsapp/sys/yddjzxxtjappseu/modules/hdyy/queryActivityList.do', {
+            method: 'POST',
+            headers: lecture_headers
+        })
+            .then(response => {
+                if (response.status === 403) {
+                    // 处理403错误
+                    return fetch("http://ehall.seu.edu.cn/gsapp/sys/yddjzxxtjappseu/*default/index.do#/hdyy")
+                        .then(response => {
+                            console.log("Loaded web");
+                            getTargetLecture();
+                        })
+                        .catch(error => {
+                            console.error("Error loading webpage: ", error);
+                        });
+                } else {
+                    return response.json();
                 }
-                const res = JSON.parse(response.responseText);
+            })
+            .then(res => {
                 if (res && res.datas && res.datas.hdlbList) {
                     const lectures = res.datas.hdlbList;
                     console.log("讲座列表: ", lectures);
-                    lectureList=lectures
+                    lectureList = lectures;
                 } else {
                     console.log("获取讲座信息失败");
                 }
-            },
-            onerror: function(error) {
+            })
+            .catch(error => {
                 console.log("请求出错: ", error);
-            }
-        });
+            });
     }
     function findMatchingObject(searchString) {
         // 遍历列表中的每个对象
@@ -286,9 +282,9 @@
 
         //验证码请求参数
         var verifyCodeParams = {
-            user: localStorage.getItem('username')||'',
-            pass: localStorage.getItem('password')||'',
-            softid: localStorage.getItem('softid')||'',
+            user: localStorage.getItem('username') || '',
+            pass: localStorage.getItem('password') || '',
+            softid: localStorage.getItem('softid') || '',
             codetype: 1902,
             file_base64: imgBase64
         };
@@ -317,81 +313,90 @@
         }
     }
     function keepAlive(wid) {
-        GM_xmlhttpRequest({
+        const url = "http://ehall.seu.edu.cn/gsapp/sys/yddjzxxtjappseu/modules/hdyy/getActivityDetail.do";
+        const body = new URLSearchParams({ 'wid': wid });
+    
+        fetch(url, {
             method: "POST",
-            url: "http://ehall.seu.edu.cn/gsapp/sys/yddjzxxtjappseu/modules/hdyy/getActivityDetail.do",
-            data: "wid=" + encodeURIComponent(wid),
             headers: lecture_headers,
-            onload: function(response) {
-                if (response.status === 200) {
-                    var res = JSON.parse(response.responseText);
-                    if (res.code !== 0) {
-                        console.error('保活失效，请检查cookie！');
-                    } else {
-                        console.log('用户身份有效，登录状态保活');
-                    }
-                } else {
-                    console.error('网络请求失败');
-                }
-            },
-            onerror: function(response) {
-                console.error('请求出错', response);
+            body: body
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('网络请求失败');
             }
+        })
+        .then(res => {
+            if (res.code !== 0) {
+                console.error('保活失效，请检查cookie！');
+            } else {
+                console.log('用户身份有效，登录状态保活');
+            }
+        })
+        .catch(error => {
+            console.error('请求出错: ', error);
         });
     }
+    
     function reserveLecture(wid, verifyCode) {
-        return new Promise((resolve, reject) => {
-            GM_xmlhttpRequest({
-                method: "POST",
-                url: "http://ehall.seu.edu.cn/gsapp/sys/yddjzxxtjappseu/modules/hdyy/addReservation.do",
-                data: "wid=" + encodeURIComponent(wid) + "&vcode=" + encodeURIComponent(verifyCode),
-                headers: lecture_headers,
-                onload: function(response) {
-                    if (response.status === 200) {
-                        try {
-                            var res = JSON.parse(response.responseText);
-                            console.log('预约接口响应数据: ', res);
-                            resolve(res.code === 0 && res.datas === 1);
-                        } catch (error) {
-                            reject(error);
-                        }
-                    } else {
-                        reject(new Error('网络请求失败'));
-                    }
-                },
-                onerror: function(response) {
-                    reject(new Error('请求出错'));
-                }
-            });
+        const url = 'http://ehall.seu.edu.cn/gsapp/sys/yddjzxxtjappseu/modules/hdyy/addReservation.do';
+        const params = new URLSearchParams({
+            'wid': wid,
+            'vcode': verifyCode
+        });
+        console.log(params)
+        return fetch(url, {
+            method: 'POST',
+            headers: lecture_headers,
+            body: params
+        })
+        .then(response => response.json())
+        .then(res => {
+            console.log('预约接口响应数据: ', res);
+            if(res.code === 0 && res.datas === 1){
+                alert("预约成功！");
+            }else{
+                alert("预约失败，原因："+res.msg);
+            }
+            
+        })
+        .catch(error => {
+            console.error('请求出错: ', error);
         });
     }
     function getLectureVerifyCode(wid) {
         return new Promise((resolve, reject) => {
-            GM_xmlhttpRequest({
+            const url = "http://ehall.seu.edu.cn/gsapp/sys/yddjzxxtjappseu/modules/hdyy/vcode.do";
+    
+            fetch(url, {
                 method: "GET",
-                url: "http://ehall.seu.edu.cn/gsapp/sys/yddjzxxtjappseu/modules/hdyy/vcode.do",
-                headers: lecture_headers,
-                onload: function(response) {
-                    if (response.status === 200) {
-                        try {
-                            var res = JSON.parse(response.responseText);
-                            var base64Str = res.datas;
-                            // 从响应中提取 base64 部分
-                            base64Str = base64Str.substring(base64Str.indexOf("base64,") + 7);
-                            resolve(base64Str);
-                        } catch (error) {
-                            reject(error);
-                        }
-                    } else {
-                        reject(new Error('网络请求失败'));
-                    }
-                },
-                onerror: function(response) {
-                    reject(new Error('请求出错'));
+                headers: lecture_headers
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('网络请求失败');
                 }
+            })
+            .then(res => {
+                try {
+                    var base64Str = res.datas;
+                    // 从响应中提取 base64 部分
+                    base64Str = base64Str.substring(base64Str.indexOf("base64,") + 7);
+                    resolve(base64Str);
+                } catch (error) {
+                    reject(error);
+                }
+            })
+            .catch(error => {
+                reject(new Error('请求出错: ' + error.message));
             });
         });
     }
+    
     function showVerifyCodeDialog(base64Image, callback) {
         // 创建对话框的 HTML
         var dialogHTML = `
@@ -434,7 +439,7 @@
         document.getElementById('verifyCodeSubmit').onclick = submitHandler;
 
         // 绑定回车键事件
-        input.onkeypress = function(event) {
+        input.onkeypress = function (event) {
             if (event.keyCode === 13) { // 13 是回车键的键码
                 submitHandler();
             }
@@ -446,20 +451,23 @@
             // 获取验证码图片
             let verifyCodeImgBase64 = await getLectureVerifyCode(wid);
             // 解析验证码
-            let verifyCode=''
-            if(autoVerify){
+            let verifyCode = ''
+            if (autoVerify) {
                 verifyCode = await parseVerifyCode(verifyCodeImgBase64);
                 console.log("解析验证码成功: ", verifyCode);
-            }else{
-                showVerifyCodeDialog(verifyCodeImgBase64, function(userInput){
+                // 尝试预约讲座
+                let res = await reserveLecture(wid, verifyCode);
+            } else {
+                showVerifyCodeDialog(verifyCodeImgBase64, function (userInput) {
                     verifyCode = userInput;
                     console.log("手动输入验证码: ", verifyCode);
+                    // 尝试预约讲座
+                    let res = reserveLecture(wid, verifyCode);
+
                 })
             }
 
-            // 尝试预约讲座
-            let res = await reserveLecture(wid, verifyCode);
-            alert("预约结果: ", res);
+
         } catch (error) {
             console.error("出错了:", error);
         }
@@ -555,7 +563,7 @@
         var dialogBox = document.getElementById('dialogBox');
         var closeDialog = document.getElementById('closeDialog');
 
-        closeDialog.addEventListener('click', function() {
+        closeDialog.addEventListener('click', function () {
             dialogBox.style.display = 'none';
         });
 
